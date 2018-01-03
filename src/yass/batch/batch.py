@@ -10,6 +10,15 @@ from .reader import RecordingsReader
 from .buffer import BufferGenerator
 
 
+def execute(idx, reader, function, **kwargs):
+    # self.logger.debug('Processing channel {}...'.format(i))
+    # self.logger.debug('Reading batch...')
+    subset = reader[idx]
+    res = function(subset, **kwargs)
+    # self.logger.debug('Appending partial result...')
+    return res
+
+
 class BatchProcessor(object):
     """
     Batch processing for large numpy matrices
@@ -42,8 +51,12 @@ class BatchProcessor(object):
 
     def __init__(self, path_to_recordings, dtype, n_channels,
                  data_format, max_memory, buffer_size=0):
+        self.path_to_recordings = path_to_recordings
+        self.dtype = dtype
+        self.n_channels = n_channels
         self.data_format = data_format
         self.buffer_size = buffer_size
+
         self.reader = RecordingsReader(path_to_recordings, dtype, n_channels,
                                        data_format)
         self.indexer = IndexGenerator(self.reader.observations,
@@ -305,6 +318,7 @@ class BatchProcessor(object):
         indexes = self.indexer.single_channel(force_complete_channel_batch,
                                               from_time, to_time,
                                               channels)
+
         for i, idx in enumerate(indexes):
             self.logger.debug('Processing channel {}...'.format(i))
             self.logger.debug('Reading batch...')
@@ -381,13 +395,24 @@ class BatchProcessor(object):
                                               channels)
         results = []
 
-        for i, idx in enumerate(indexes):
-            self.logger.debug('Processing channel {}...'.format(i))
-            self.logger.debug('Reading batch...')
-            subset = self.reader[idx]
-            res = function(subset, **kwargs)
-            self.logger.debug('Appending partial result...')
-            results.append(res)
+        from functools import partial
+        import multiprocessing as mp
+
+        execute_ = partial(execute, reader=self.reader, function=function,
+                           **kwargs)
+
+        # not getting any performance improvements...
+        pool = mp.Pool(processes=2)
+        # pool = mp.pool.ThreadPool(processes=8)
+        results = pool.map(execute_, indexes)
+
+        # for i, idx in enumerate(indexes):
+        #     self.logger.debug('Processing channel {}...'.format(i))
+        #     self.logger.debug('Reading batch...')
+        #     subset = self.reader[idx]
+        #     res = function(subset, **kwargs)
+        #     self.logger.debug('Appending partial result...')
+        #     results.append(res)
 
         return results
 

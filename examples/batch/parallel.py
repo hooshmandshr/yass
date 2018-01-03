@@ -1,11 +1,11 @@
 """
-Filter data using BatchProcessor.single_channel_apply
+Running operations in parallel
 """
-
 import logging
 import os
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from yass.batch import BatchProcessor
 from yass.batch import RecordingsReader
@@ -25,19 +25,18 @@ bp = BatchProcessor(path_to_neuropixel_data,
                     dtype='int16', n_channels=385, data_format='wide',
                     max_memory='500MB')
 
-# appply a single channel transformation, each batch will be all observations
+# apply a single channel transformation, each batch will be all observations
 # from one channel
-bp.single_channel_apply(butterworth, mode='disk',
-                        output_path=path_to_filtered_data,
-                        low_freq=300, high_factor=0.1,
-                        order=3, sampling_freq=30000)
+filtered = bp.single_channel_apply(butterworth, mode='memory',
+                                   output_path=path_to_filtered_data,
+                                   low_freq=300, high_factor=0.1,
+                                   channels=range(100),
+                                   order=3, sampling_freq=30000)
+filtered = np.vstack(filtered).T
+
 # let's visualize the results
 raw = RecordingsReader(path_to_neuropixel_data, dtype='int16',
                        n_channels=385, data_format='wide')
-
-# you do not need to specify the format since single_channel_apply
-# saves a yaml file with such parameters
-filtered = RecordingsReader(path_to_filtered_data)
 
 fig, (ax1, ax2) = plt.subplots(2, 1)
 ax1.plot(raw[:2000, 0])
