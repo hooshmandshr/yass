@@ -13,7 +13,7 @@ from ..batch import PipedTransformation as Transform
 from ..explore import RecordingExplorer
 
 from .filter import butterworth
-from .standarize import standarize, standard_deviation
+from .standarize import standarize
 from . import whiten
 from . import detect
 from . import dimensionality_reduction as dim_red
@@ -117,20 +117,15 @@ def run(output_directory='tmp/'):
     (filtered_path,), (filtered_params,) = pipeline.run()
 
     # standarize
-    bp = BatchProcessor(
-        filtered_path, filtered_params['dtype'], filtered_params['n_channels'],
-        filtered_params['data_format'], CONFIG.resources.max_memory)
-    batches = bp.multi_channel()
-    first_batch, _, _ = next(batches)
-    sd = standard_deviation(first_batch, CONFIG.recordings.sampling_rate)
-
-    (standarized_path, standarized_params) = bp.multi_channel_apply(
-        standarize,
-        mode='disk',
-        output_path=os.path.join(TMP, 'standarized.bin'),
-        if_file_exists='skip',
-        cast_dtype=OUTPUT_DTYPE,
-        sd=sd)
+    (standarized_path,
+        standarized_params) = standarize(filtered_path,
+                                         filtered_params['dtype'],
+                                         filtered_params['n_channels'],
+                                         filtered_params['data_format'],
+                                         CONFIG.recordings.sampling_rate,
+                                         CONFIG.resources.max_memory,
+                                         os.path.join(TMP, 'standarized.bin'),
+                                         OUTPUT_DTYPE)
 
     standarized = RecordingsReader(standarized_path)
     n_observations = standarized.observations

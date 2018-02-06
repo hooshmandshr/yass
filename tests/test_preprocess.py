@@ -12,8 +12,7 @@ from yass.geometry import (parse, find_channel_neighbors,
                            n_steps_neigh_channels)
 
 from yass.preprocess.detect import threshold
-# from yass.preprocess.waveform import get_waveforms
-from yass.preprocess.standarize import standarize
+from yass.preprocess.standarize import standarize_
 
 import yass
 from yass import preprocess
@@ -66,7 +65,7 @@ def test_can_apply_butterworth_filter(data):
 
 
 def test_can_standarize(data):
-    standarize(data, srate)
+    standarize_(data, srate)
 
 
 def test_can_parse(path_to_geometry):

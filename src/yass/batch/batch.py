@@ -138,6 +138,7 @@ class BatchProcessor(object):
         function: callable
             Function to be applied, must accept a 1D numpy array as its first
             parameter
+
         mode: str
             'disk' or 'memory', if 'disk', a binary file is created at the
             beginning of the operation and each partial result is saved
@@ -146,27 +147,35 @@ class BatchProcessor(object):
             file with some file parameters (useful if you want to later use
             RecordingsReader to read the file). If 'memory', partial results
             are kept in memory and returned as a list
+
         output_path: str, optional
             Where to save the output, required if 'disk' mode
+
         force_complete_channel_batch: bool, optional
             If True, every index generated will correspond to all the
             observations in a single channel, hence
             n_batches = n_selected_channels, defaults to True. If True
             from_time and to_time must be None
+
         from_time: int, optional
             Starting time, defaults to None
+
         to_time: int, optional
             Ending time, defaults to None
+
         channels: int, tuple or str, optional
             A tuple with the channel indexes or 'all' to traverse all channels,
             defaults to 'all'
+
         if_file_exists: str, optional
             One of 'overwrite', 'abort', 'skip'. If 'overwrite' it replaces the
             file if it exists, if 'abort' if raise a ValueError exception if
             the file exists, if 'skip' if skips the operation if the file
             exists. Only valid when mode = 'disk'
+
         cast_dtype: str, optional
             Output dtype, defaults to None which means no cast is done
+
         **kwargs
             kwargs to pass to function
 
