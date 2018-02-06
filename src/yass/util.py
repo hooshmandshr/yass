@@ -1,8 +1,14 @@
 """
 Utility functions
 """
+try:
+    from pathlib2 import Path
+except Exception:
+    from pathlib import Path
+
 from . import __version__
 
+import logging
 import datetime
 import os
 import functools
@@ -291,3 +297,35 @@ def requires(condition, message):
         return wrapper
 
     return _requires
+
+
+def save_numpy_object(obj, output_path, if_file_exists, name='file'):
+    """Utility to save a numpy object
+
+    Parameters
+    ----------
+    obj: numpy.ndarray
+        Object to save
+
+    output_path: str
+        Where to save the file
+
+    if_file_exists: str, optional
+        One of 'overwrite', 'abort', 'skip'. If 'overwrite' it replaces the
+        file if it exists, if 'abort' if raise a ValueError exception if
+        the file exists, if 'skip' if skips the operation if the file
+        exists
+
+    name: str, optional
+        Name (just used for logging messages)
+    """
+    logger = logging.getLogger(__name__)
+    output_path = Path(output_path)
+
+    if output_path.exists() and if_file_exists == 'abort':
+        raise ValueError('{} already exists'.format(output_path))
+    elif output_path.exists() and if_file_exists == 'skip':
+        logger.info('{} already exists, skipping...'.format(output_path))
+    else:
+        np.save(str(output_path), obj)
+        logger.info('Saved {} in {}'.format(output_path))
