@@ -62,7 +62,7 @@ def whiten(path_to_data, dtype, n_channels, data_shape,
 
     if_file_exists: str, optional
         One of 'overwrite', 'abort', 'skip'. If 'overwrite' it replaces the
-        file if it exists, if 'abort' if raise a ValueError exception if
+        file if it exists, if 'abort' ii raises a ValueError exception if
         the file exists, if 'skip' if skips the operation if the file
         exists
 

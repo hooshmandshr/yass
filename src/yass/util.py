@@ -329,3 +329,37 @@ def save_numpy_object(obj, output_path, if_file_exists, name='file'):
     else:
         np.save(str(output_path), obj)
         logger.info('Saved {} in {}'.format(name, output_path))
+
+
+def check_for_files(parameters, if_file_exists):
+    """
+    Decorator used to change the behavior of functions that write to disk
+
+    Parameters
+    ----------
+    parameters: list
+        List of strings with the paramameters containing the filenames to
+        check for, the function should also contain a parameter named
+        output_path. The path to the file is created relative to the
+        output_path
+
+    if_file_exists: str
+        One of 'overwrite', 'abort', 'skip'. If 'overwrite' the decorator does
+        nothing as the function is expected to save the file, if 'abort',
+        it raises a ValueError exception if any of the file exists, if
+        'skip' the function is skipped and the
+    """
+    pass
+    # def _requires(func):
+
+    #     @wraps(func)
+    #     def wrapper(self, *args, **kwargs):
+
+    #         if not condition:
+    #             raise ImportError(message)
+
+    #         return func(self, *args, **kwargs)
+
+    #     return wrapper
+
+    # return _requires

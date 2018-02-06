@@ -115,7 +115,7 @@ def pca(path_to_data, dtype, n_channels, data_shape, waveforms, spike_index,
     rotation = project(suff_stats, spikes_per_channel, temporal_features,
                        neighbors_matrix)
 
-    if save_rotation_matrix:
+    if output_path and save_rotation_matrix:
         path_to_rotation = Path(output_path) / save_rotation_matrix
         save_numpy_object(rotation, path_to_rotation,
                           if_file_exists=if_file_exists,
@@ -130,7 +130,7 @@ def pca(path_to_data, dtype, n_channels, data_shape, waveforms, spike_index,
                    neighbors_matrix, geometry)
 
     # save scores
-    if save_scores:
+    if output_path and save_scores:
         path_to_score = Path(output_path) / save_scores
         save_numpy_object(scores, path_to_score,
                           if_file_exists=if_file_exists,

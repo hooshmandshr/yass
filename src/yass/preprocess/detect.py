@@ -1,6 +1,11 @@
 """
 Functions for detecting spikes
 """
+try:
+    from pathlib2 import Path
+except Exception:
+    from pathlib import Path
+
 import logging
 
 import numpy as np
@@ -17,7 +22,10 @@ logger = logging.getLogger(__name__)
 
 def threshold(path_to_data, dtype, n_channels, data_shape,
               max_memory, neighbors_matrix, spike_size,
-              minimum_half_waveform_size, std_factor):
+              minimum_half_waveform_size, std_factor, output_path=None,
+              save_spike_index_clear='spike_index_clear.npy',
+              save_spike_index_collision='spike_index_collision.npy',
+              if_file_exists='skip'):
     """Threshold-based batch spike detection
 
     Parameters
@@ -53,9 +61,39 @@ def threshold(path_to_data, dtype, n_channels, data_shape,
     std_factor: float?
         ?
 
+    output_path: str, optional
+        Directory to save spike indexes, if None, results won't be stored, but
+        only returned by the function
+
+    save_spike_index_clear: str, optional
+        Whether to save spike_index_clear, it is used as the filename for the
+        file (relative to output_path), if None, results won't be saved, only
+        returned
+
+    save_spike_index_collision: str, optional
+        Whether to save spike_index_collision, it is used as the filename for
+        the file (relative to output_path), if None, results won't be saved,
+        only returned
+
+    if_file_exists:
+        What to do if there is already a file in save_spike_index_clear
+        or save_spike_index_collision lcoation. One of 'overwrite', 'abort',
+        'skip'. If 'overwrite' it replaces the file if it exists, if 'abort'
+        if raise a ValueErrorexception if the file exists, if 'skip' if skips
+        the operation if the file exists
+
     Returns
     -------
+    spike_index_clear: numpy.ndarray (n_clear_spikes, 2)
+        2D array with indexes for clear spikes, first column contains the
+        spike location in the recording and the second the main channel
+        (channel whose amplitude is maximum)
+
+    spike_index_collision: numpy.ndarray (0, 2)
+        Empty array, collision is not implemented in the threshold detector
     """
+    # path_to_spike_index_clear = Path(output_path) / save_spike_index_clear
+
     # determine number of observations
     reader = RecordingsReader(path_to_data)
     n_observations = reader.observations
