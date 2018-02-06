@@ -8,8 +8,7 @@ from functools import reduce
 import numpy as np
 
 from .. import read_config
-from ..batch import BatchPipeline, BatchProcessor, RecordingsReader
-from ..batch import PipedTransformation as Transform
+from ..batch import BatchProcessor, RecordingsReader
 from ..explore import RecordingExplorer
 
 from .filter import butterworth
@@ -91,37 +90,27 @@ def run(output_directory='tmp/'):
                     'stored there'.format(TMP))
 
     path = os.path.join(CONFIG.data.root_folder, CONFIG.data.recordings)
-    dtype = CONFIG.recordings.dtype
+    params = dict(dtype=CONFIG.recordings.dtype,
+                  n_channels=CONFIG.recordings.n_channels,
+                  data_format=CONFIG.recordings.format)
 
-    # initialize pipeline object, one batch per channel
-    pipeline = BatchPipeline(path, dtype, CONFIG.recordings.n_channels,
-                             CONFIG.recordings.format,
-                             CONFIG.resources.max_memory, TMP)
-
-    # add filter transformation if necessary
     if CONFIG.preprocess.filter:
-        filter_op = Transform(
-            butterworth,
-            'filtered.bin',
-            mode='single_channel_one_batch',
-            keep=True,
-            if_file_exists='skip',
-            cast_dtype=OUTPUT_DTYPE,
-            low_freq=CONFIG.filter.low_pass_freq,
-            high_factor=CONFIG.filter.high_factor,
-            order=CONFIG.filter.order,
-            sampling_freq=CONFIG.recordings.sampling_rate)
-
-        pipeline.add([filter_op])
-
-    (filtered_path,), (filtered_params,) = pipeline.run()
+        path, params = butterworth(path, params['dtype'], params['n_channels'],
+                                   params['data_format'],
+                                   CONFIG.filter.low_pass_freq,
+                                   CONFIG.filter.high_factor,
+                                   CONFIG.filter.order,
+                                   CONFIG.recordings.sampling_rate,
+                                   CONFIG.resources.max_memory,
+                                   os.path.join(TMP, 'filtered.bin'),
+                                   OUTPUT_DTYPE)
 
     # standarize
     (standarized_path,
-        standarized_params) = standarize(filtered_path,
-                                         filtered_params['dtype'],
-                                         filtered_params['n_channels'],
-                                         filtered_params['data_format'],
+        standarized_params) = standarize(path,
+                                         params['dtype'],
+                                         params['n_channels'],
+                                         params['data_format'],
                                          CONFIG.recordings.sampling_rate,
                                          CONFIG.resources.max_memory,
                                          os.path.join(TMP, 'standarized.bin'),

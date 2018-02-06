@@ -49,7 +49,8 @@ def standarize(path_to_data, dtype, n_channels, data_shape,
     Returns
     -------
     standarized_path: str
-        Location of the standarized recordings
+        Path to standarized recordings
+
     standarized_params: dict
         A dictionary with the parameters for the standarized recordings
         (dtype, n_channels, data_format)
@@ -67,7 +68,7 @@ def standarize(path_to_data, dtype, n_channels, data_shape,
 
     # apply transformation
     (standarized_path,
-        standarized_params) = bp.multi_channel_apply(standarize_,
+        standarized_params) = bp.multi_channel_apply(_standarize,
                                                      mode='disk',
                                                      output_path=output_path,
                                                      if_file_exists='skip',
@@ -77,7 +78,7 @@ def standarize(path_to_data, dtype, n_channels, data_shape,
     return standarized_path, standarized_params
 
 
-def standarize_(rec, sampling_freq=None, sd=None):
+def _standarize(rec, sampling_freq=None, sd=None):
     """Standarize recordings
 
     Parameters

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 
-from yass.preprocess.filter import butterworth
+from yass.preprocess.filter import _butterworth
 from yass.preprocess import whiten
 
 # FIXME: MOVE THIS TO A DIFFERENT TEST SUITE
@@ -12,7 +12,7 @@ from yass.geometry import (parse, find_channel_neighbors,
                            n_steps_neigh_channels)
 
 from yass.preprocess.detect import threshold
-from yass.preprocess.standarize import standarize_
+from yass.preprocess.standarize import _standarize
 
 import yass
 from yass import preprocess
@@ -60,12 +60,12 @@ def path_to_nn_config():
 
 
 def test_can_apply_butterworth_filter(data):
-    butterworth(data[:, 0], low_freq=300, high_factor=0.1,
-                order=3, sampling_freq=20000)
+    _butterworth(data[:, 0], low_frequency=300, high_factor=0.1,
+                 order=3, sampling_frequency=20000)
 
 
 def test_can_standarize(data):
-    standarize_(data, srate)
+    _standarize(data, srate)
 
 
 def test_can_parse(path_to_geometry):
