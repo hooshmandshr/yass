@@ -3,7 +3,6 @@ Preprocess pipeline
 """
 import logging
 import os.path
-from functools import reduce
 
 import numpy as np
 
@@ -247,44 +246,24 @@ def _threshold_detection(standarized_path, standarized_params, n_observations,
         logger.info('Saved waveform from clear spikes in: {}'
                     .format(path_to_waveforms_clear))
 
-    #########################
-    # PCA - rotation matrix #
-    #########################
+    #######
+    # PCA #
+    #######
 
-    # compute per-batch sufficient statistics for PCA on standarized data
-    logger.info('Computing PCA sufficient statistics...')
-    stats = bp.multi_channel_apply(
-        dim_red.suff_stat,
-        mode='memory',
-        spike_index=spike_index_clear,
-        spike_size=CONFIG.spikeSize)
-
-    suff_stats = reduce(lambda x, y: np.add(x, y), [e[0] for e in stats])
-
-    spikes_per_channel = reduce(lambda x, y: np.add(x, y),
-                                [e[1] for e in stats])
-
-    # compute rotation matrix
-    logger.info('Computing PCA projection matrix...')
-    rotation = dim_red.project(suff_stats, spikes_per_channel,
-                               CONFIG.spikes.temporal_features,
-                               CONFIG.neighChannels)
-    path_to_rotation = os.path.join(TMP_FOLDER, 'rotation.npy')
-    np.save(path_to_rotation, rotation)
-    logger.info('Saved rotation matrix in {}...'.format(path_to_rotation))
-
-    ###########################################
-    # PCA - waveform dimensionality reduction #
-    ###########################################
-
-    logger.info('Reducing spikes dimensionality with PCA matrix...')
-    scores = dim_red.score(waveforms_clear, rotation, spike_index_clear[:, 1],
-                           CONFIG.neighChannels, CONFIG.geom)
-
-    # save scores
-    path_to_score = os.path.join(TMP_FOLDER, 'score_clear.npy')
-    np.save(path_to_score, scores)
-    logger.info('Saved spike scores in {}...'.format(path_to_score))
+    scores, _ = dim_red.pca(standarized_path, standarized_params['dtype'],
+                            standarized_params['n_channels'],
+                            standarized_params['data_format'],
+                            waveforms_clear,
+                            spike_index_clear,
+                            CONFIG.spikeSize,
+                            CONFIG.spikes.temporal_features,
+                            CONFIG.neighChannels,
+                            CONFIG.geom,
+                            CONFIG.resources.max_memory,
+                            output_path=TMP_FOLDER,
+                            save_rotation_matrix='rotation.npy',
+                            save_scores='score_clear.npy',
+                            if_file_exists='skip')
 
     return scores, spike_index_clear, spike_index_collision
 
