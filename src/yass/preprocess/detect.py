@@ -1,16 +1,94 @@
 """
 Functions for detecting spikes
 """
+import logging
+
 import numpy as np
 
+from yass.batch import BatchProcessor
+from yass.reader import RecordingsReader
 from ..geometry import n_steps_neigh_channels
 
 # TODO: documentation needs improvements: see (?) and Notes section
 # FIXME: seems like the detector is throwing slightly different results
 # when n batch > 1
+logger = logging.getLogger(__name__)
 
 
-def threshold(rec, neighbors, spike_size, std_factor):
+def threshold(path_to_data, dtype, n_channels, data_shape,
+              max_memory, neighbors_matrix, spike_size,
+              minimum_half_waveform_size, std_factor):
+    """Threshold-based batch spike detection
+
+    Parameters
+    ----------
+    path_to_data: str
+        Path to recordings in binary format
+
+    dtype: str
+        Recordings dtype
+
+    n_channels: int
+        Number of channels in the recordings
+
+    data_shape: str
+        Data shape, can be either 'long' (observations, channels) or
+        'wide' (channels, observations)
+
+    max_memory:
+        Max memory to use in each batch (e.g. 100MB, 1GB)
+
+    neighbors_matrix: numpy.ndarray (n_channels, n_channels)
+        Boolean numpy 2-D array where a i, j entry is True if i is considered
+        neighbor of j
+
+    spike_size: int
+        Spike size
+
+    minimum_half_waveform_size: int
+        This is used to remove spikes that are either at the beginning or end
+        of the recordings and whose location does not allow to draw a
+        wavefor of size at least 2 * minimum_half_waveform_size + 1
+
+    std_factor: float?
+        ?
+
+    Returns
+    -------
+    """
+    # determine number of observations
+    reader = RecordingsReader(path_to_data)
+    n_observations = reader.observations
+
+    # instatiate batch processor
+    bp = BatchProcessor(path_to_data, dtype, n_channels, data_shape,
+                        max_memory, buffer_size=0)
+
+    # run threshold detector
+    spikes = bp.multi_channel_apply(_threshold,
+                                    mode='memory',
+                                    cleanup_function=fix_indexes,
+                                    neighbors=neighbors_matrix,
+                                    spike_size=spike_size,
+                                    std_factor=std_factor)
+
+    # no collision detection implemented, all spikes are marked as clear
+    spike_index_clear = np.vstack(spikes)
+
+    # remove spikes whose location won't let us draw a complete waveform
+    logger.info('Removing clear indexes outside the allowed range to '
+                'draw a complete waveform...')
+    spike_index_clear, _ = (remove_incomplete_waveforms(
+                            spike_index_clear,
+                            minimum_half_waveform_size,
+                            n_observations))
+
+    spike_index_collision = np.zeros((0, 2), 'int32')
+
+    return spike_index_clear, spike_index_collision
+
+
+def _threshold(rec, neighbors, spike_size, std_factor):
     """Threshold-based spike detection
 
     Parameters
