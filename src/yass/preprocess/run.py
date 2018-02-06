@@ -141,29 +141,18 @@ def _threshold_detection(standarized_path, standarized_params, n_observations,
     # Whiten data #
     ###############
 
-    # compute Q for whitening
-    logger.info('Computing whitening matrix...')
-    bp = BatchProcessor(standarized_path, standarized_params['dtype'],
-                        standarized_params['n_channels'],
-                        standarized_params['data_format'],
-                        CONFIG.resources.max_memory)
-    batches = bp.multi_channel()
-    first_batch, _, _ = next(batches)
-    Q = whiten.matrix(first_batch, CONFIG.neighChannels, CONFIG.spikeSize)
-
-    path_to_whitening_matrix = os.path.join(TMP_FOLDER, 'whitening.npy')
-    np.save(path_to_whitening_matrix, Q)
-    logger.info('Saved whitening matrix in {}'
-                .format(path_to_whitening_matrix))
-
-    # apply whitening to every batch
-    (whitened_path, whitened_params) = bp.multi_channel_apply(
-        np.matmul,
-        mode='disk',
-        output_path=os.path.join(TMP_FOLDER, 'whitened.bin'),
-        if_file_exists='skip',
-        cast_dtype=OUTPUT_DTYPE,
-        b=Q)
+    (whitened_path,
+     whitened_params) = whiten.whiten(standarized_path,
+                                      standarized_params['dtype'],
+                                      standarized_params['n_channels'],
+                                      standarized_params['data_format'],
+                                      CONFIG.neighChannels,
+                                      CONFIG.spikeSize,
+                                      CONFIG.resources.max_memory,
+                                      os.path.join(TMP_FOLDER, 'whitened.bin'),
+                                      OUTPUT_DTYPE,
+                                      if_file_exists='skip',
+                                      save_whitening_matrix=True)
 
     ###################
     # Spike detection #
@@ -345,7 +334,7 @@ def _neural_network_detection(standarized_path, standarized_params,
                                           path_to_spike_index_clear,
                                           path_to_spike_index_collision))
 
-        # apply threshold detector on standarized data
+        # apply neural network detector on standarized data
         autoencoder_filename = CONFIG.neural_network_autoencoder.filename
         mc = bp.multi_channel_apply
         res = mc(
@@ -390,9 +379,7 @@ def _neural_network_detection(standarized_path, standarized_params,
             # Waveform extraction #
             #######################
 
-            # TODO: what should the behaviour be for spike indexes that are
-            # when starting/ending the recordings and it is not possible to
-            # draw a complete waveform?
+            # TODO: duplicated code, remove
             logger.info('Computing whitening matrix...')
             bp = BatchProcessor(standarized_path, standarized_params['dtype'],
                                 standarized_params['n_channels'],
@@ -507,6 +494,7 @@ def _neural_network_detection(standarized_path, standarized_params,
                 'draw a complete waveform...')
             scores = scores[idx]
 
+            # TODO: duplicated code, remove
             # compute Q for whitening
             logger.info('Computing whitening matrix...')
             bp = BatchProcessor(standarized_path, standarized_params['dtype'],

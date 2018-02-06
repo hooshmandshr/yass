@@ -328,4 +328,4 @@ def save_numpy_object(obj, output_path, if_file_exists, name='file'):
         logger.info('{} already exists, skipping...'.format(output_path))
     else:
         np.save(str(output_path), obj)
-        logger.info('Saved {} in {}'.format(output_path))
+        logger.info('Saved {} in {}'.format(name, output_path))

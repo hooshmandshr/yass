@@ -88,7 +88,7 @@ def whiten(path_to_data, dtype, n_channels, data_shape,
                         max_memory)
     batches = bp.multi_channel()
     first_batch, _, _ = next(batches)
-    Q = whiten.matrix(first_batch, neighbors_matrix, spike_size)
+    Q = matrix(first_batch, neighbors_matrix, spike_size)
 
     if save_whitening_matrix:
         path_to_whitening_matrix = Path(output_path).parent / 'whitening.npy'
@@ -104,6 +104,8 @@ def whiten(path_to_data, dtype, n_channels, data_shape,
                                                if_file_exists='skip',
                                                cast_dtype=output_dtype,
                                                b=Q)
+
+    return whitened_path, whitened_params
 
 
 def matrix(ts, neighbors, spike_size):
